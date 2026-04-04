@@ -6,4 +6,3 @@ yfinance
 requests
 python-dotenv
 gunicorn
-flask-cors
