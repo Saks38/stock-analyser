@@ -5,7 +5,8 @@ from sklearn.linear_model import LinearRegression
 
 def get_prediction(symbol, date=None, mode="daily"):
     try:
-        # ✅ Auto-fix symbol (if user types SBIN instead of SBIN.NS)
+        # ✅ Fix symbol automatically
+        symbol = symbol.upper()
         if "." not in symbol:
             symbol += ".NS"
 
@@ -16,28 +17,26 @@ def get_prediction(symbol, date=None, mode="daily"):
             df = yf.download(symbol, period="3mo")
 
         if df.empty:
-            return {"error": "No data found for this stock"}
+            return {"error": "No data found"}
 
-        prices = df["Close"].dropna()
+        # 🔢 Clean price data (IMPORTANT FIX)
+        prices = df["Close"].dropna().values.flatten()
 
-        # 🔢 Prepare data for ML
+        # 🧠 ML prep
         X = np.arange(len(prices)).reshape(-1, 1)
-        y = prices.values
+        y = prices.astype(float)
 
-        # 🤖 Train model
+        # 🤖 Train
         model = LinearRegression()
         model.fit(X, y)
 
-        # 🔮 Predict next value
+        # 🔮 Predict next
         next_index = np.array([[len(prices)]])
-        predicted_price = model.predict(next_index)[0]   # ✅ FIX HERE
+        predicted_price = model.predict(next_index)
 
-        # 💰 Current price
-        current_price = y[-1]
-
-        # ✅ Convert to normal Python float (IMPORTANT FIX)
-        current_price = float(current_price)
-        predicted_price = float(predicted_price)
+        # ✅ FORCE SCALAR (FINAL FIX)
+        predicted_price = float(predicted_price.item())
+        current_price = float(y[-1])
 
         # 📈 Direction
         direction = "UP 📈" if predicted_price > current_price else "DOWN 📉"
